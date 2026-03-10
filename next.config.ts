@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* API calls use absolute URLs via NEXT_PUBLIC_API_URL env var */
+  /* API calls use absolute URLs via NEXT_PUBLIC_API_BASE_URL env var */
   images: {
     remotePatterns: [
       {

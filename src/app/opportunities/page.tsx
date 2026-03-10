@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense, useCallback } from "react";
+import React, { useState, useEffect, Suspense, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { PageContainer } from "@/components/layout/PageContainer";
@@ -17,6 +17,7 @@ import { Pagination } from "@/components/search/Pagination";
 import { useOpportunities } from "@/hooks/useOpportunities";
 import { FetchOpportunitiesParams } from "@/types/opportunity";
 import { useDebounce } from "@/hooks/useDebounce";
+import { rankOpportunities } from "@/lib/searchRanking";
 
 function OpportunitiesContent() {
   const router = useRouter();
@@ -122,6 +123,14 @@ function OpportunitiesContent() {
   };
 
   const { data: opportunities, loading, error, paging } = useOpportunities(fetchParams);
+  const rankedOpportunities = useMemo(
+    () => rankOpportunities(opportunities, qStr),
+    [opportunities, qStr]
+  );
+
+  const handleSearchSubmit = () => {
+    updateUrlParams({ q: localSearch, page: "1" });
+  };
 
   return (
     <PageContainer>
@@ -194,7 +203,7 @@ function OpportunitiesContent() {
         <main className="flex-1 space-y-8">
           <div className="flex flex-col gap-6">
             <div className="bg-white rounded-3xl border border-slate-200 p-4 shadow-sm shadow-slate-200/50">
-               <SearchBar value={localSearch} onChange={setLocalSearch} />
+              <SearchBar value={localSearch} onChange={setLocalSearch} onSearch={handleSearchSubmit} />
             </div>
             
             <FilterChips filters={filters} onRemoveFilter={handleRemoveFilter} />
@@ -221,9 +230,9 @@ function OpportunitiesContent() {
                  <SkeletonCard key={i} />
                ))}
             </div>
-          ) : opportunities.length > 0 ? (
+          ) : rankedOpportunities.length > 0 ? (
             <div className="pb-16">
-              <OpportunityGrid opportunities={opportunities} />
+              <OpportunityGrid opportunities={rankedOpportunities} />
               {paging && (
                 <div className="mt-12 flex justify-center">
                   <Pagination

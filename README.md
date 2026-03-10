@@ -30,7 +30,11 @@ Copy-Item .env.example .env.local
 
 Required variables:
 
-- `NEXT_PUBLIC_API_URL` (local example: `http://localhost:3001`, production example: `https://api.example.com`)
+- `NEXT_PUBLIC_API_BASE_URL` (local example: `http://localhost:3001`, production example: `https://api.example.com`)
+
+Backward compatibility:
+
+- `NEXT_PUBLIC_API_URL` is also accepted if already configured.
 
 For deployment (e.g., Vercel), set the same variable in your project Environment Variables for each target environment (Production/Preview/Development) and redeploy.
 
