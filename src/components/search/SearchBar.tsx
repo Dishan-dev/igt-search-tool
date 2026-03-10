@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/Button";
 interface SearchBarProps {
   value: string;
   onChange: (value: string) => void;
+  onSearch?: () => void;
 }
 
-export function SearchBar({ value, onChange }: SearchBarProps) {
+export function SearchBar({ value, onChange, onSearch }: SearchBarProps) {
   return (
     <div className="flex w-full items-center gap-2">
       <div className="relative flex-1">
@@ -33,9 +34,16 @@ export function SearchBar({ value, onChange }: SearchBarProps) {
           className="pl-11 h-14 bg-white/80 backdrop-blur-sm border-slate-200/60 shadow-sm transition-all duration-300 focus:shadow-md focus:bg-white"
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              onSearch?.();
+            }
+          }}
         />
       </div>
-      <Button className="shrink-0 hidden sm:flex h-14 px-8 text-base">Search</Button>
+      <Button onClick={() => onSearch?.()} className="shrink-0 hidden sm:flex h-14 px-8 text-base">
+        Search
+      </Button>
     </div>
   );
 }

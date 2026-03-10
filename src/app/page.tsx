@@ -9,8 +9,11 @@ import { fetchOpportunities } from "@/lib/api";
 import { Opportunity } from "@/types/opportunity";
 import { useState, useEffect } from "react";
 import { Modal } from "@/components/ui/Modal";
+import { useRouter } from "next/navigation";
+import { getOpportunityImage } from "@/lib/opportunityImage";
 
 export default function Home() {
+  const router = useRouter();
   const chips = ["Marketing", "Tech", "Remote", "Paid", "Asia", "3–6 months"];
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [selectedOpp, setSelectedOpp] = useState<Opportunity | null>(null);
@@ -37,11 +40,15 @@ export default function Home() {
   const handleTagClick = (tag: string) => {
     const newTag = selectedTag === tag ? null : tag;
     setSelectedTag(newTag);
-    loadOpportunities(newTag || searchQuery || undefined);
+    const q = (newTag || searchQuery || "").trim();
+    const target = q ? `/opportunities?q=${encodeURIComponent(q)}&page=1` : "/opportunities?page=1";
+    router.push(target);
   };
 
   const handleSearch = () => {
-    loadOpportunities(searchQuery || selectedTag || undefined);
+    const q = (searchQuery || selectedTag || "").trim();
+    const target = q ? `/opportunities?q=${encodeURIComponent(q)}&page=1` : "/opportunities?page=1";
+    router.push(target);
   };
 
   const floatingOpps = [...opportunities, ...opportunities];
@@ -180,7 +187,7 @@ export default function Home() {
                     {/* Card Image */}
                     <div className="absolute inset-0 bg-slate-800">
                        <Image
-                          src={`https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&q=80&auto=format&fit=crop`}
+                          src={getOpportunityImage(opp)}
                           alt={opp.title}
                           fill
                           className="object-cover transition-transform duration-500 group-hover:scale-110"

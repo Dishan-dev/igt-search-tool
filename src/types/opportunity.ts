@@ -17,6 +17,33 @@ export interface Opportunity {
   applicantsCount: number;
   hostLc: string;
 
+  branchId?: number;
+  branchName?: string;
+  hostLcId?: number;
+  location?: string;
+  programmes?: Array<{
+    id: number;
+    shortName: string;
+  }>;
+  learningPoints?: string[];
+  selectionProcess?: string;
+  logistics?: {
+    accommodationProvided?: string;
+    accommodationCovered?: string;
+    computerProvided?: string;
+    foodProvided?: string;
+    foodCovered?: string;
+    transportationProvided?: string;
+    transportationCovered?: string;
+  };
+  specifics?: {
+    salary?: number;
+    salaryPeriodicity?: string;
+    computer?: string;
+    expectedWorkSchedule?: string;
+  };
+  imageUrl?: string;
+
   // Computed fields added by normalizer for UI compatibility
   remoteType?: string;
   stipend?: string;
@@ -36,10 +63,13 @@ export interface OpportunityResponse {
 export interface FetchOpportunitiesParams {
   q?: string;
   page?: number;
+  limit?: number;
+  remote?: boolean;
+  status?: string;
   category?: string;
   country?: string;
   remoteType?: string;
-  paid?: string;
+  paid?: string | boolean;
   duration?: string;
   sortBy?: string;
 }
