@@ -26,12 +26,12 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} flex h-screen flex-col font-sans antialiased bg-slate-50 relative overflow-hidden`}
+        className={`${geistSans.variable} ${geistMono.variable} relative flex h-screen h-[100svh] h-[100dvh] flex-col overflow-hidden bg-slate-50 font-sans antialiased`}
       >
         {/* Subtle background decorative gradient */}
         <div className="absolute top-0 inset-x-0 h-[50rem] -z-10 pointer-events-none" />
         
-        <main className="flex-1 overflow-y-auto">{children}</main>
+        <main className="app-scroll flex-1 min-h-0 overflow-y-auto">{children}</main>
       </body>
     </html>
   );

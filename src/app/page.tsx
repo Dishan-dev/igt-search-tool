@@ -54,7 +54,7 @@ export default function Home() {
   const floatingOpps = [...opportunities, ...opportunities];
 
   return (
-    <section className="relative min-h-screen flex items-center overflow-y-auto bg-gradient-to-r from-[#172e6d] to-[#461169] py-20 lg:py-0">
+    <section className="relative flex min-h-full items-center overflow-hidden bg-gradient-to-r from-[#172e6d] to-[#461169] py-20 lg:py-0">
       {/* Background Image */}
       <Image
         src="/hero-bg.jpeg"
