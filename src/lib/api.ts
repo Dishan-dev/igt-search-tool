@@ -183,7 +183,10 @@ export async function fetchOpportunityById(id: string): Promise<Opportunity | nu
     }
 
     const payload = (await response.json()) as { data?: Opportunity } | Opportunity;
-    const opportunity = "data" in payload ? payload.data : payload;
+    const opportunity =
+      payload && typeof payload === "object" && "data" in payload
+        ? payload.data
+        : (payload as Opportunity);
 
     if (!opportunity) {
       return null;
