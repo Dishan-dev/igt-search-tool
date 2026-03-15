@@ -27,6 +27,11 @@ export interface Opportunity {
   }>;
   learningPoints?: string[];
   selectionProcess?: string;
+  roleDetails?: string[];
+  processDetails?: string[];
+  eligibilityDetails?: string[];
+  logisticsDetails?: string[];
+  visaDetails?: string[];
   logistics?: {
     accommodationProvided?: string;
     accommodationCovered?: string;
@@ -42,7 +47,26 @@ export interface Opportunity {
     computer?: string;
     expectedWorkSchedule?: string;
   };
+  opportunityCost?: {
+    programmeFee?: number | null;
+    projectFee?: number | null;
+    total?: number | null;
+    currency?: string | null;
+    country?: string | null;
+    healthInsuranceLink?: string | null;
+  } | null;
+  feeAndHealthInsurance?: {
+    programmeFee?: number | null;
+    projectFee?: number | null;
+    total?: number | null;
+    currency?: string | null;
+    country?: string | null;
+    healthInsuranceLink?: string | null;
+  } | null;
   imageUrl?: string;
+  assignedPersonName?: string | null;
+  assignedPersonWhatsapp?: string | null;
+  assignedPersonWhatsappUrl?: string | null;
 
   // Computed fields added by normalizer for UI compatibility
   remoteType?: string;

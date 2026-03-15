@@ -26,7 +26,7 @@ const TOPIC_IMAGE_POOLS: Record<Topic, string[]> = {
   design: [
     "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=1200&q=80&auto=format&fit=crop",
     "https://images.unsplash.com/photo-1455390582262-044cdead277a?w=1200&q=80&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=1200&q=80&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=1200&q=80&auto=format&fit=crop",
   ],
   health: [
     "https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=1200&q=80&auto=format&fit=crop",
@@ -34,6 +34,7 @@ const TOPIC_IMAGE_POOLS: Record<Topic, string[]> = {
     "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1200&q=80&auto=format&fit=crop",
   ],
   education: [
+    "https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=1200&q=80&auto=format&fit=crop",
     "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1200&q=80&auto=format&fit=crop",
     "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=1200&q=80&auto=format&fit=crop",
     "https://images.unsplash.com/photo-1513258496099-48168024aec0?w=1200&q=80&auto=format&fit=crop",
@@ -59,18 +60,80 @@ function hashString(value: string): number {
 }
 
 function detectTopic(opp: Opportunity): Topic {
+  const titleCategory = normalize([opp.title, opp.category].join(" "));
   const haystack = normalize(
     [opp.title, opp.category, opp.company, opp.description, ...(opp.tags || [])].join(" ")
   );
 
-  if (/developer|software|engineer|data|it|ai|ml|tech|programming/.test(haystack)) return "tech";
+  // Prioritize explicit role intent from title/category to avoid mismatched images.
+  if (/marketing|brand|seo|content|social|digital/.test(titleCategory)) return "marketing";
+  if (/language|teaching|teacher|tutor|education|school|learning|english|french|spanish|italian|portuguese/.test(titleCategory)) return "education";
+  if (/developer|software|engineer|data|\bit\b|ai|ml|tech|programming/.test(titleCategory)) return "tech";
+  if (/sales|business|management|operations|entrepreneur/.test(titleCategory)) return "business";
+  if (/finance|account|audit|bank|investment|tax/.test(titleCategory)) return "finance";
+  if (/design|ui|ux|creative|graphic|visual/.test(titleCategory)) return "design";
+  if (/health|medical|clinic|hospital|care|nursing/.test(titleCategory)) return "health";
+
   if (/marketing|brand|seo|content|social|digital/.test(haystack)) return "marketing";
+  if (/language|teaching|teacher|tutor|education|school|learning|english|french|spanish|italian|portuguese|esol/.test(haystack)) return "education";
+  if (/developer|software|engineer|data|\bit\b|ai|ml|tech|programming/.test(haystack)) return "tech";
   if (/sales|business|management|operations|entrepreneur/.test(haystack)) return "business";
   if (/finance|account|audit|bank|investment|tax/.test(haystack)) return "finance";
   if (/design|ui|ux|creative|graphic|visual/.test(haystack)) return "design";
   if (/health|medical|clinic|hospital|care|nursing/.test(haystack)) return "health";
-  if (/education|teaching|teacher|school|training|learning/.test(haystack)) return "education";
+  if (/training/.test(haystack)) return "education";
   return "default";
+}
+
+export function assignOpportunityImages(opportunities: Opportunity[]): Record<string, string> {
+  const assignedById: Record<string, string> = {};
+  const usedImages = new Set<string>();
+  const topicCursor: Record<Topic, number> = {
+    tech: 0,
+    marketing: 0,
+    business: 0,
+    finance: 0,
+    design: 0,
+    health: 0,
+    education: 0,
+    default: 0,
+  };
+
+  const allPools = Object.values(TOPIC_IMAGE_POOLS).flat();
+
+  opportunities.forEach((opportunity) => {
+    if (assignedById[opportunity.id]) return;
+
+    if (opportunity.imageUrl && /^https?:\/\//i.test(opportunity.imageUrl)) {
+      assignedById[opportunity.id] = opportunity.imageUrl;
+      usedImages.add(opportunity.imageUrl);
+      return;
+    }
+
+    const topic = detectTopic(opportunity);
+    const pool = TOPIC_IMAGE_POOLS[topic] || TOPIC_IMAGE_POOLS.default;
+
+    let selected: string | null = null;
+    const start = topicCursor[topic] % pool.length;
+    for (let i = 0; i < pool.length; i += 1) {
+      const candidate = pool[(start + i) % pool.length];
+      if (!usedImages.has(candidate)) {
+        selected = candidate;
+        topicCursor[topic] = (start + i + 1) % pool.length;
+        break;
+      }
+    }
+
+    if (!selected) {
+      const fallback = allPools.find((candidate) => !usedImages.has(candidate));
+      selected = fallback || pool[hashString(`${opportunity.id}:${opportunity.title}:${opportunity.company}`) % pool.length];
+    }
+
+    assignedById[opportunity.id] = selected;
+    usedImages.add(selected);
+  });
+
+  return assignedById;
 }
 
 export function getOpportunityImage(opp: Opportunity): string {

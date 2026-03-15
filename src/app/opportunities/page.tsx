@@ -122,11 +122,33 @@ function OpportunitiesContent() {
     page: parseInt(pageStr, 10) || 1,
   };
 
+  const fallbackParams: FetchOpportunitiesParams = {
+    q: "",
+    category: categoryStr,
+    country: countryStr,
+    remoteType: remoteTypeStr,
+    paid: paidStr,
+    duration: durationStr,
+    sortBy: sortByStr,
+    page: 1,
+  };
+
   const { data: opportunities, loading, error, paging } = useOpportunities(fetchParams);
+  const { data: fallbackOpportunities } = useOpportunities(fallbackParams);
   const rankedOpportunities = useMemo(
     () => rankOpportunities(opportunities, qStr),
     [opportunities, qStr]
   );
+  const fallbackRankedOpportunities = useMemo(
+    () => rankOpportunities(fallbackOpportunities, qStr).slice(0, 9),
+    [fallbackOpportunities, qStr]
+  );
+  const showFallbackRecommendations =
+    !loading &&
+    !error &&
+    qStr.trim().length > 0 &&
+    rankedOpportunities.length === 0 &&
+    fallbackRankedOpportunities.length > 0;
 
   const handleSearchSubmit = () => {
     updateUrlParams({ q: localSearch, page: "1" });
@@ -156,7 +178,7 @@ function OpportunitiesContent() {
                 Explore <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Opportunities</span>
              </h1>
              <p className="text-lg text-white/60 font-medium">
-                Discover {paging?.totalItems || 0} premium Global Talent internships across the world.<br className="hidden md:block" /> 
+               Discover premium Global Talent internships across the world.<br className="hidden md:block" /> 
                 Refine your search to find the perfect match for your career goals.
              </p>
           </div>
@@ -210,7 +232,7 @@ function OpportunitiesContent() {
             
             <div className="flex items-center justify-between px-2">
               <span className="text-sm font-semibold text-slate-500">
-                {loading ? "Refreshing..." : `${paging?.totalItems || 0} placements found`}
+                {loading ? "Refreshing..." : "Showing curated opportunities"}
               </span>
               <div className="flex items-center gap-3">
                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Sort By</span>
@@ -242,6 +264,13 @@ function OpportunitiesContent() {
                   />
                 </div>
               )}
+            </div>
+          ) : showFallbackRecommendations ? (
+            <div className="pb-16 space-y-6">
+              <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700">
+                No exact matches for your search. Showing best-fit opportunities instead.
+              </div>
+              <OpportunityGrid opportunities={fallbackRankedOpportunities} />
             </div>
           ) : (
             <div className="bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200 py-20">
