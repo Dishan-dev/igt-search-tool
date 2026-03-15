@@ -1,6 +1,9 @@
 import { FetchOpportunitiesParams, Opportunity, OpportunityResponse } from "@/types/opportunity";
 
-const API_BASE = "";
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  "";
 const OPPORTUNITIES_BASE_PATH = "/api/opportunities";
 
 function normalizeSalaryValue(raw: number | string | null | undefined): number | null {
