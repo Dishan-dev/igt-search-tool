@@ -35,7 +35,6 @@ function renderBulletList(items: string[]) {
 
 export default async function OpportunityDetailsPage({ params }: PageProps) {
   const { id } = await params;
-  const guidanceWhatsappUrl = "https://wa.me/94706022582";
   
   // Use the API helper to fetch data
   const opportunity = await fetchOpportunityById(id);
@@ -52,6 +51,20 @@ export default async function OpportunityDetailsPage({ params }: PageProps) {
     .filter((opp) => opp.id !== opportunity.id)
     .slice(0, 3);
   const expaOpportunityUrl = `https://aiesec.org/opportunity/global-teacher/${opportunity.id}`;
+  const guidanceMessage = [
+    "Hi AIESEC Colombo South Team,",
+    "",
+    "I would like more details about this opportunity:",
+    `- Title: ${opportunity.title}`,
+    `- Company: ${opportunity.company}`,
+    `- Category: ${opportunity.category}`,
+    `- Location: ${opportunity.city}, ${opportunity.country}`,
+    `- Opportunity ID: ${opportunity.id}`,
+    `- Link: ${expaOpportunityUrl}`,
+    "",
+    "Can you please guide me on eligibility, process, and next steps?",
+  ].join("\n");
+  const guidanceWhatsappUrl = `https://wa.me/94706022582?text=${encodeURIComponent(guidanceMessage)}`;
 
   const roleDetails = (opportunity.roleDetails && opportunity.roleDetails.length > 0)
     ? opportunity.roleDetails
