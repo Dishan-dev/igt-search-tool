@@ -17,7 +17,7 @@ interface FilterSidebarProps {
   onClearFilters: () => void;
 }
 
-const CATEGORIES = ["All", "Marketing", "Tech", "Business Development", "UI/UX", "HR", "Operations", "Finance", "Product"];
+const CATEGORIES = ["All", "GTa", "GTe"];
 const COUNTRIES = ["All", "Japan", "Germany", "United Arab Emirates", "Singapore", "United States", "United Kingdom", "Canada", "Australia", "Netherlands", "Spain", "Hong Kong"];
 const REMOTE_TYPES = ["All", "remote", "hybrid", "onsite"];
 const PAID_OPTIONS = ["All", "Paid", "Unpaid"];

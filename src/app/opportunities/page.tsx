@@ -13,7 +13,6 @@ import { SortDropdown } from "@/components/search/SortDropdown";
 import { OpportunityGrid } from "@/components/opportunity/OpportunityGrid";
 import { SkeletonCard } from "@/components/opportunity/SkeletonCard";
 import { EmptyState } from "@/components/opportunity/EmptyState";
-import { Pagination } from "@/components/search/Pagination";
 import { useOpportunities } from "@/hooks/useOpportunities";
 import { FetchOpportunitiesParams } from "@/types/opportunity";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -27,13 +26,13 @@ function OpportunitiesContent() {
 
   // 1. Read Truth from URL Parameters
   const qStr = searchParams.get("q") || "";
-  const pageStr = searchParams.get("page") || "1";
   const categoryStr = searchParams.get("category") || "";
   const countryStr = searchParams.get("country") || "";
   const remoteTypeStr = searchParams.get("remoteType") || "";
   const paidStr = searchParams.get("paid") || "";
   const durationStr = searchParams.get("duration") || "";
   const sortByStr = searchParams.get("sortBy") || "latest";
+  const programmeStr = (searchParams.get("programme") || "all").toLowerCase();
 
   const filters: FiltersState = {
     category: categoryStr,
@@ -105,9 +104,16 @@ function OpportunitiesContent() {
     updateUrlParams({ sortBy: value });
   };
 
-  const handlePageChange = (newPage: number) => {
-    updateUrlParams({ page: newPage.toString() });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  const handleProgrammeChange = (value: "all" | "gta" | "gte") => {
+    updateUrlParams({ programme: value === "all" ? null : value, page: "1" });
+  };
+
+  const matchesProgramme = (category: string | undefined, selectedProgramme: string): boolean => {
+    if (selectedProgramme === "all") return true;
+    const normalized = (category || "").toLowerCase().trim();
+    if (selectedProgramme === "gta") return normalized === "gta" || normalized === "igta";
+    if (selectedProgramme === "gte") return normalized === "gte" || normalized === "igte";
+    return true;
   };
 
   // 4. Extract Hook via the Read Parameters
@@ -119,7 +125,8 @@ function OpportunitiesContent() {
     paid: paidStr,
     duration: durationStr,
     sortBy: sortByStr,
-    page: parseInt(pageStr, 10) || 1,
+    page: 1,
+    limit: 1000,
   };
 
   const fallbackParams: FetchOpportunitiesParams = {
@@ -131,23 +138,31 @@ function OpportunitiesContent() {
     duration: durationStr,
     sortBy: sortByStr,
     page: 1,
+    limit: 1000,
   };
 
-  const { data: opportunities, loading, error, paging } = useOpportunities(fetchParams);
+  const { data: opportunities, loading, error } = useOpportunities(fetchParams);
   const { data: fallbackOpportunities } = useOpportunities(fallbackParams);
   const rankedOpportunities = useMemo(
     () => rankOpportunities(opportunities, qStr),
     [opportunities, qStr]
   );
+  const filteredRankedOpportunities = useMemo(
+    () => rankedOpportunities.filter((opp) => matchesProgramme(opp.category, programmeStr)),
+    [rankedOpportunities, programmeStr]
+  );
   const fallbackRankedOpportunities = useMemo(
-    () => rankOpportunities(fallbackOpportunities, qStr).slice(0, 9),
-    [fallbackOpportunities, qStr]
+    () =>
+      rankOpportunities(fallbackOpportunities, qStr)
+        .filter((opp) => matchesProgramme(opp.category, programmeStr))
+        .slice(0, 12),
+    [fallbackOpportunities, qStr, programmeStr]
   );
   const showFallbackRecommendations =
     !loading &&
     !error &&
     qStr.trim().length > 0 &&
-    rankedOpportunities.length === 0 &&
+    filteredRankedOpportunities.length === 0 &&
     fallbackRankedOpportunities.length > 0;
 
   const handleSearchSubmit = () => {
@@ -157,8 +172,8 @@ function OpportunitiesContent() {
   return (
     <PageContainer>
       {/* Hero Card Section */}
-      <div className="relative mb-12 rounded-[2rem] overflow-hidden bg-slate-900 shadow-2xl">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 via-transparent to-purple-600/20" />
+      <div className="relative mb-12 overflow-hidden rounded-4xl bg-slate-900 shadow-2xl">
+        <div className="absolute inset-0 bg-linear-to-br from-blue-600/20 via-transparent to-purple-600/20" />
         <div className="relative z-10 p-8 md:p-12 lg:p-16 flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="max-w-2xl">
              <div className="flex items-center gap-3 mb-6">
@@ -175,7 +190,7 @@ function OpportunitiesContent() {
                 </div>
              </div>
              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white tracking-tight mb-4 leading-tight">
-                Explore <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Opportunities</span>
+                Explore <span className="bg-linear-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Opportunities</span>
              </h1>
              <p className="text-lg text-white/60 font-medium">
                Discover premium Global Talent internships across the world.<br className="hidden md:block" /> 
@@ -229,6 +244,29 @@ function OpportunitiesContent() {
             </div>
             
             <FilterChips filters={filters} onRemoveFilter={handleRemoveFilter} />
+
+            <div className="flex items-center gap-2 px-2">
+              {([
+                { key: "all", label: "All" },
+                { key: "gte", label: "GTe" },
+                { key: "gta", label: "GTa" },
+              ] as const).map((programme) => {
+                const isActive = programmeStr === programme.key;
+                return (
+                  <button
+                    key={programme.key}
+                    onClick={() => handleProgrammeChange(programme.key)}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition-colors ${
+                      isActive
+                        ? "border-blue-500 bg-blue-500 text-white"
+                        : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                    }`}
+                  >
+                    {programme.label}
+                  </button>
+                );
+              })}
+            </div>
             
             <div className="flex items-center justify-between px-2">
               <span className="text-sm font-semibold text-slate-500">
@@ -242,7 +280,7 @@ function OpportunitiesContent() {
           </div>
 
           {error ? (
-            <div className="rounded-[2rem] border border-red-200 bg-red-50 p-8 text-center text-red-600 shadow-sm ring-1 ring-red-100">
+            <div className="rounded-4xl border border-red-200 bg-red-50 p-8 text-center text-red-600 shadow-sm ring-1 ring-red-100">
               <p className="font-bold text-lg">{error}</p>
               <p className="text-sm mt-1 opacity-80">We encountered an issue fetching the directory. Please try refreshing.</p>
             </div>
@@ -252,18 +290,9 @@ function OpportunitiesContent() {
                  <SkeletonCard key={i} />
                ))}
             </div>
-          ) : rankedOpportunities.length > 0 ? (
+          ) : filteredRankedOpportunities.length > 0 ? (
             <div className="pb-16">
-              <OpportunityGrid opportunities={rankedOpportunities} />
-              {paging && (
-                <div className="mt-12 flex justify-center">
-                  <Pagination
-                    currentPage={paging.currentPage}
-                    totalPages={paging.totalPages}
-                    onPageChange={handlePageChange}
-                  />
-                </div>
-              )}
+              <OpportunityGrid opportunities={filteredRankedOpportunities} />
             </div>
           ) : showFallbackRecommendations ? (
             <div className="pb-16 space-y-6">
