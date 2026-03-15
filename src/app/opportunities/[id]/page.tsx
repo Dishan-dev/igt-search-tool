@@ -62,11 +62,12 @@ export default async function OpportunityDetailsPage({ params }: PageProps) {
   const eligibilityDetails = opportunity.eligibilityDetails || [];
   const logisticsDetails = opportunity.logisticsDetails || [];
   const visaDetails = opportunity.visaDetails || [];
-  const feeSource = opportunity.feeAndHealthInsurance || opportunity.opportunityCost || null;
-  const feeAmount = typeof feeSource?.total === "number" ? feeSource.total : null;
-  const feeCurrency = feeSource?.currency || null;
-  const feeDisplay = feeAmount !== null && feeAmount >= 0
-    ? `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(feeAmount)}${feeCurrency ? ` ${feeCurrency}` : ""}`
+  const salaryAmount = typeof opportunity.salary === "number" ? opportunity.salary : null;
+  const salaryCurrency =
+    opportunity.feeAndHealthInsurance?.currency || opportunity.opportunityCost?.currency || "USD";
+  const salaryPeriod = (opportunity.salaryPeriodicity || "").replace(/^per\s+/i, "").trim();
+  const salaryDisplay = salaryAmount !== null && salaryAmount > 0
+    ? `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(salaryAmount)} ${salaryCurrency}${salaryPeriod ? ` / ${salaryPeriod}` : ""}`
     : "Not specified";
 
   const detailCards: DetailSectionCard[] = [
@@ -216,7 +217,7 @@ export default async function OpportunityDetailsPage({ params }: PageProps) {
                 { label: "Duration", value: opportunity.duration, icon: "⏳", color: "emerald" },
                 { label: "Work Type", value: opportunity.remoteType, icon: "💼", color: "purple" },
                 { label: "Start Date", value: opportunity.startDate ? new Date(opportunity.startDate).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : "Flexible", icon: "📅", color: "pink" },
-                  { label: "FEE", value: feeDisplay, icon: "💳", color: "orange" }
+                  { label: "SALARY", value: salaryDisplay, icon: "💳", color: "orange" }
               ].map((item, i) => (
                 <div key={i} className="flex items-start gap-4 group/item">
                   <div className="mt-0.5 h-10 w-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-lg transition-transform group-hover/item:scale-110">
