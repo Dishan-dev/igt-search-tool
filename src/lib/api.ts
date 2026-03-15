@@ -3,8 +3,60 @@ import { FetchOpportunitiesParams, Opportunity, OpportunityResponse } from "@/ty
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL ||
   process.env.NEXT_PUBLIC_API_URL ||
-  "http://localhost:3001";
+  "";
 const OPPORTUNITIES_BASE_PATH = "/api/opportunities";
+
+function normalizeSalaryValue(raw: number | string | null | undefined): number | null {
+  if (typeof raw === "number") {
+    return Number.isFinite(raw) ? raw : null;
+  }
+
+  if (typeof raw === "string") {
+    const parsed = Number(raw.replace(/[^\d.-]/g, ""));
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
+}
+
+function normalizeSalaryPeriodicity(raw: string | null | undefined): string {
+  const normalized = (raw || "").toLowerCase().trim();
+  if (!normalized) return "";
+  if (normalized.includes("month")) return "month";
+  if (normalized.includes("week")) return "week";
+  if (normalized.includes("day")) return "day";
+  if (normalized.includes("year") || normalized.includes("annual")) return "year";
+  return normalized.replace(/^per\s+/, "");
+}
+
+function formatCompensation(salary: number | null, salaryPeriodicity: string | null | undefined): string | undefined {
+  if (salary === null || salary <= 0) return undefined;
+
+  const number = new Intl.NumberFormat("en-US", {
+    maximumFractionDigits: 2,
+  }).format(salary);
+  const period = normalizeSalaryPeriodicity(salaryPeriodicity);
+
+  return period ? `${number} / ${period}` : number;
+}
+
+function normalizeCostInfo(raw: Opportunity["opportunityCost"] | Opportunity["feeAndHealthInsurance"]) {
+  if (!raw || typeof raw !== "object") return null;
+
+  const total = normalizeSalaryValue(raw.total ?? null);
+  const programmeFee = normalizeSalaryValue(raw.programmeFee ?? null);
+  const projectFee = normalizeSalaryValue(raw.projectFee ?? null);
+
+  return {
+    ...raw,
+    total,
+    programmeFee,
+    projectFee,
+    currency: raw.currency || null,
+    country: raw.country || null,
+    healthInsuranceLink: raw.healthInsuranceLink || null,
+  };
+}
 
 function decodeHtmlEntities(value: string): string {
   const entities: Record<string, string> = {
@@ -77,21 +129,45 @@ function normalizeTags(rawTags: string[] | undefined): string[] {
   return Array.from(new Set(normalized));
 }
 
+function normalizeDetailList(rawValues: string[] | undefined): string[] {
+  if (!rawValues?.length) return [];
+
+  const cleaned = rawValues
+    .flatMap((value) => {
+      const formatted = htmlToReadableText(value || "").replace(/^[-#\s]+/, "").trim();
+      return formatted ? [formatted] : [];
+    });
+
+  return Array.from(new Set(cleaned));
+}
+
 /**
  * Normalize an opportunity from the API response to add computed UI-friendly fields.
  */
 function normalizeOpportunity(opp: Opportunity): Opportunity {
   const remoteValue = (opp.remoteOpportunity || "").toLowerCase();
   const isRemote = remoteValue === "remote" || remoteValue === "true";
+  const normalizedSalary = normalizeSalaryValue(opp.salary);
+  const stipend = formatCompensation(normalizedSalary, opp.salaryPeriodicity);
+  const opportunityCost = normalizeCostInfo(opp.opportunityCost);
+  const feeAndHealthInsurance = normalizeCostInfo(opp.feeAndHealthInsurance);
 
   return {
     ...opp,
     remoteType: isRemote ? "remote" : "onsite",
-    stipend: opp.salary ? `$${opp.salary} ${opp.salaryPeriodicity || ""}`.trim() : undefined,
+    salary: normalizedSalary,
+    stipend,
     duration: opp.duration || "Not specified",
     country: opp.country || "Not specified",
     description: htmlToReadableText(opp.description || "") || "No description provided.",
     tags: normalizeTags(opp.tags),
+    roleDetails: normalizeDetailList(opp.roleDetails),
+    processDetails: normalizeDetailList(opp.processDetails),
+    eligibilityDetails: normalizeDetailList(opp.eligibilityDetails),
+    logisticsDetails: normalizeDetailList(opp.logisticsDetails),
+    visaDetails: normalizeDetailList(opp.visaDetails),
+    opportunityCost,
+    feeAndHealthInsurance,
     startDate: opp.startDate || null,
   };
 }
@@ -122,7 +198,7 @@ export async function fetchOpportunities(params: FetchOpportunitiesParams = {}):
   const queryString = query.toString();
   const url = `${API_BASE}${OPPORTUNITIES_BASE_PATH}${queryString ? `?${queryString}` : ""}`;
 
-  const response = await fetch(url);
+  const response = await fetch(url, { cache: "no-store" });
 
   if (!response.ok) {
     throw new Error(`Failed to fetch opportunities (${response.status})`);
@@ -175,7 +251,7 @@ export async function fetchOpportunities(params: FetchOpportunitiesParams = {}):
  */
 export async function fetchOpportunityById(id: string): Promise<Opportunity | null> {
   try {
-    const response = await fetch(`${API_BASE}${OPPORTUNITIES_BASE_PATH}/${id}`);
+    const response = await fetch(`${API_BASE}${OPPORTUNITIES_BASE_PATH}/${id}`, { cache: "no-store" });
 
     if (!response.ok) {
       if (response.status === 404) return null;

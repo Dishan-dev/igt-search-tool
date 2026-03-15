@@ -2,6 +2,8 @@ import { useState, useCallback, useEffect } from "react";
 import { fetchOpportunities } from "@/lib/api";
 import { Opportunity, Paging, FetchOpportunitiesParams } from "@/types/opportunity";
 
+const DEFAULT_AUTO_REFRESH_MS = 30000;
+
 export function useOpportunities(initialParams: FetchOpportunitiesParams = {}) {
   const [data, setData] = useState<Opportunity[]>([]);
   const [paging, setPaging] = useState<Paging | null>(null);
@@ -26,6 +28,25 @@ export function useOpportunities(initialParams: FetchOpportunitiesParams = {}) {
   // Effect to refetch on initialParams change (e.g. search filters updated)
   useEffect(() => {
     fetchOpportunitiesData({ q, page, category, country, remoteType, paid, duration, sortBy });
+  }, [
+    q,
+    page,
+    category,
+    country,
+    remoteType,
+    paid,
+    duration,
+    sortBy,
+    fetchOpportunitiesData,
+  ]);
+
+  // Auto-refresh keeps the list aligned with backend updates (e.g. new opportunities).
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      fetchOpportunitiesData({ q, page, category, country, remoteType, paid, duration, sortBy });
+    }, DEFAULT_AUTO_REFRESH_MS);
+
+    return () => window.clearInterval(intervalId);
   }, [
     q,
     page,

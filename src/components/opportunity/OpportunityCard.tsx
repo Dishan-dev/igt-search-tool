@@ -10,6 +10,14 @@ interface OpportunityCardProps {
 }
 
 export function OpportunityCard({ opportunity }: OpportunityCardProps) {
+  const feeSource = opportunity.feeAndHealthInsurance || opportunity.opportunityCost || null;
+  const feeAmount = typeof feeSource?.total === "number" ? feeSource.total : null;
+  const feeCurrency = feeSource?.currency || null;
+  const feeDisplay =
+    feeAmount !== null && feeAmount >= 0
+      ? `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(feeAmount)}${feeCurrency ? ` ${feeCurrency}` : ""}`
+      : "Not specified";
+
   return (
     <Card className="group flex h-full flex-col p-6 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-purple-900/5 transition-all duration-500 relative overflow-hidden">
       {/* Decorative top border gradient that activates on hover */}
@@ -24,11 +32,8 @@ export function OpportunityCard({ opportunity }: OpportunityCardProps) {
             {opportunity.company}
           </p>
         </div>
-        <Badge
-          variant={opportunity.paid ? "default" : "outline"}
-          className="shrink-0"
-        >
-          {opportunity.paid ? "Paid" : "Unpaid"}
+        <Badge variant="secondary" className="shrink-0 bg-orange-50 text-orange-700 border border-orange-100">
+          {`FEE: ${feeDisplay}`}
         </Badge>
       </div>
 
@@ -62,27 +67,9 @@ export function OpportunityCard({ opportunity }: OpportunityCardProps) {
         <Badge variant="secondary" className="bg-slate-100 text-slate-700 font-normal">
           {opportunity.category}
         </Badge>
-        {opportunity.stipend && (
-          <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 font-medium">
-            {opportunity.stipend}
-          </Badge>
-        )}
       </div>
 
       <div className="mt-6 space-y-2 border-t border-slate-100 pt-5">
-        {opportunity.assignedPersonWhatsappUrl && (
-          <a
-            href={opportunity.assignedPersonWhatsappUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block w-full"
-          >
-            <Button className="w-full">
-              More Info Contact{opportunity.assignedPersonName ? ` (${opportunity.assignedPersonName})` : ""}
-            </Button>
-          </a>
-        )}
-
         <Link href={`/opportunities/${opportunity.id}`} className="block w-full">
           <Button variant="outline" className="w-full">
             View Details

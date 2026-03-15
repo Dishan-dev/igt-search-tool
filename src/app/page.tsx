@@ -10,7 +10,7 @@ import { Opportunity } from "@/types/opportunity";
 import { useState, useEffect } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { useRouter } from "next/navigation";
-import { getOpportunityImage } from "@/lib/opportunityImage";
+import { assignOpportunityImages } from "@/lib/opportunityImage";
 
 export default function Home() {
   const router = useRouter();
@@ -52,6 +52,7 @@ export default function Home() {
   };
 
   const floatingOpps = [...opportunities, ...opportunities];
+  const imageByOpportunityId = assignOpportunityImages(opportunities);
 
   return (
     <section className="relative flex min-h-full items-center overflow-hidden bg-gradient-to-r from-[#172e6d] to-[#461169] py-20 lg:py-0">
@@ -187,7 +188,7 @@ export default function Home() {
                     {/* Card Image */}
                     <div className="absolute inset-0 bg-slate-800">
                        <Image
-                          src={getOpportunityImage(opp)}
+                          src={imageByOpportunityId[opp.id] || "/hero-bg.jpeg"}
                           alt={opp.title}
                           fill
                           className="object-cover transition-transform duration-500 group-hover:scale-110"
