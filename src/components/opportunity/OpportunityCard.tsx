@@ -33,9 +33,6 @@ export function OpportunityCard({ opportunity }: OpportunityCardProps) {
             {opportunity.company}
           </p>
         </div>
-        <Badge variant="secondary" className="shrink-0 bg-orange-50 text-orange-700 border border-orange-100">
-          {`SALARY: ${salaryDisplay}`}
-        </Badge>
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-500">
@@ -67,6 +64,9 @@ export function OpportunityCard({ opportunity }: OpportunityCardProps) {
       <div className="mt-5 flex flex-wrap gap-2">
         <Badge variant="secondary" className="bg-slate-100 text-slate-700 font-normal">
           {opportunity.category}
+        </Badge>
+        <Badge variant="secondary" className="bg-orange-50 text-orange-700 border border-orange-100 font-medium">
+          {`SALARY: ${salaryDisplay}`}
         </Badge>
       </div>
 
