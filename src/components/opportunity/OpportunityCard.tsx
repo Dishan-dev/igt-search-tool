@@ -10,12 +10,13 @@ interface OpportunityCardProps {
 }
 
 export function OpportunityCard({ opportunity }: OpportunityCardProps) {
-  const feeSource = opportunity.feeAndHealthInsurance || opportunity.opportunityCost || null;
-  const feeAmount = typeof feeSource?.total === "number" ? feeSource.total : null;
-  const feeCurrency = feeSource?.currency || null;
-  const feeDisplay =
-    feeAmount !== null && feeAmount >= 0
-      ? `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(feeAmount)}${feeCurrency ? ` ${feeCurrency}` : ""}`
+  const salaryAmount = typeof opportunity.salary === "number" ? opportunity.salary : null;
+  const salaryCurrency =
+    opportunity.feeAndHealthInsurance?.currency || opportunity.opportunityCost?.currency || "USD";
+  const salaryPeriod = (opportunity.salaryPeriodicity || "").replace(/^per\s+/i, "").trim();
+  const salaryDisplay =
+    salaryAmount !== null && salaryAmount > 0
+      ? `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(salaryAmount)} ${salaryCurrency}${salaryPeriod ? ` / ${salaryPeriod}` : ""}`
       : "Not specified";
 
   return (
@@ -33,7 +34,7 @@ export function OpportunityCard({ opportunity }: OpportunityCardProps) {
           </p>
         </div>
         <Badge variant="secondary" className="shrink-0 bg-orange-50 text-orange-700 border border-orange-100">
-          {`FEE: ${feeDisplay}`}
+          {`SALARY: ${salaryDisplay}`}
         </Badge>
       </div>
 
