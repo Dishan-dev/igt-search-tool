@@ -17,6 +17,7 @@ import { useOpportunities } from "@/hooks/useOpportunities";
 import { FetchOpportunitiesParams } from "@/types/opportunity";
 import { useDebounce } from "@/hooks/useDebounce";
 import { rankOpportunities } from "@/lib/searchRanking";
+import { Opportunity } from "@/types/opportunity";
 
 function OpportunitiesContent() {
   const router = useRouter();
@@ -108,11 +109,28 @@ function OpportunitiesContent() {
     updateUrlParams({ programme: value === "all" ? null : value, page: "1" });
   };
 
-  const matchesProgramme = (category: string | undefined, selectedProgramme: string): boolean => {
+  const matchesProgramme = (opportunity: Opportunity, selectedProgramme: string): boolean => {
     if (selectedProgramme === "all") return true;
-    const normalized = (category || "").toLowerCase().trim();
-    if (selectedProgramme === "gta") return normalized === "gta" || normalized === "igta";
-    if (selectedProgramme === "gte") return normalized === "gte" || normalized === "igte";
+
+    const category = (opportunity.category || "").toLowerCase().trim();
+    const programmeNames = (opportunity.programmes || [])
+      .map((programme) => (programme.shortName || "").toLowerCase().trim())
+      .filter(Boolean);
+    const combined = [
+      category,
+      ...programmeNames,
+      (opportunity.title || "").toLowerCase(),
+      (opportunity.description || "").toLowerCase(),
+    ].join(" ");
+
+    if (selectedProgramme === "gta") {
+      return combined.includes("igta") || combined.includes("gta");
+    }
+
+    if (selectedProgramme === "gte") {
+      return combined.includes("igte") || combined.includes("gte");
+    }
+
     return true;
   };
 
@@ -148,13 +166,13 @@ function OpportunitiesContent() {
     [opportunities, qStr]
   );
   const filteredRankedOpportunities = useMemo(
-    () => rankedOpportunities.filter((opp) => matchesProgramme(opp.category, programmeStr)),
+    () => rankedOpportunities.filter((opp) => matchesProgramme(opp, programmeStr)),
     [rankedOpportunities, programmeStr]
   );
   const fallbackRankedOpportunities = useMemo(
     () =>
       rankOpportunities(fallbackOpportunities, qStr)
-        .filter((opp) => matchesProgramme(opp.category, programmeStr))
+        .filter((opp) => matchesProgramme(opp, programmeStr))
         .slice(0, 12),
     [fallbackOpportunities, qStr, programmeStr]
   );
